@@ -16,14 +16,6 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
 @property (nonatomic, strong) CAShapeLayer *borderCircle;
 @property (nonatomic, strong) CAShapeLayer *centerCircle;
 
-@property (nonatomic, assign) CGFloat duration;
-@property (nonatomic, assign) CGFloat sidelength;
-@property (nonatomic, assign) CGFloat uncheckedLineWidth;
-@property (nonatomic, assign) UIColor *tickColor;
-@property (nonatomic, assign) UIColor *checkedFillColor;
-@property (nonatomic, assign) UIColor *uncheckedFillColor;
-@property (nonatomic, strong) UIColor *uncheckedBorderColor;
-
 @property (nonatomic, strong) NSArray *tickPoints;
 @property (nonatomic, assign) BOOL isChecked;
 
@@ -40,9 +32,10 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
     return self;
 }
 
-- (instancetype)init {
-    self = [super init];
+- (instancetype)initWithSideWidth:(CGFloat)sideWidth {
+    self = [super initWithFrame:CGRectMake(0, 0, sideWidth, sideWidth)];
     if (self) {
+        self.sideWidth = sideWidth;
         [self initializeUI];
     }
     return self;
@@ -51,9 +44,8 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
 - (void)initializeUI {
     self.backgroundColor = [UIColor whiteColor];
     self.uncheckedFillColor = [UIColor whiteColor];
-    self.sidelength = self.bounds.size.width;
-//    self.checkedFillColor = [UIColor colorWithRed:21 / 255.0 green:155 / 255.0 blue:69 / 255.0 alpha:1.0];
-    self.checkedFillColor = [UIColor orangeColor];
+    self.tickColor = [UIColor whiteColor];
+    self.checkedFillColor = [UIColor colorWithRed:21.0 / 255.0 green:155.0 / 255.0 blue:69.0 / 255.0 alpha:1.0];
     self.uncheckedLineWidth = 8;
     self.isChecked = false;
     self.uncheckedBorderColor = [UIColor colorWithRed:223 / 255.0 green:223 / 255.0 blue:223 / 255.0 alpha:1];
@@ -79,7 +71,7 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
 }
 
 #pragma mark -- animation
-
+// border 基础动画
 - (void)startBorderLayerAnimation {
     
     if (self.isChecked) {
@@ -88,15 +80,15 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
         }
         
         CABasicAnimation *lineWidthAnimation = [CABasicAnimation animationWithKeyPath:@"path"];
-        lineWidthAnimation.fromValue = (__bridge id _Nullable)([UIBezierPath bezierPathWithArcCenter:CGPointMake(self.sidelength / 2, self.sidelength / 2) radius: 0 startAngle:0 endAngle:M_PI * 2 clockwise:true].CGPath);
-        lineWidthAnimation.toValue =  (__bridge id _Nullable)([UIBezierPath bezierPathWithArcCenter:CGPointMake(self.sidelength / 2, self.sidelength / 2) radius: self.sidelength / 2 - self.uncheckedLineWidth startAngle:0 endAngle:M_PI * 2 clockwise:true].CGPath);
+        lineWidthAnimation.fromValue = (__bridge id _Nullable)([UIBezierPath bezierPathWithArcCenter:CGPointMake(self.sideWidth / 2, self.sideWidth / 2) radius: 0 startAngle:0 endAngle:M_PI * 2 clockwise:true].CGPath);
+        lineWidthAnimation.toValue =  (__bridge id _Nullable)([UIBezierPath bezierPathWithArcCenter:CGPointMake(self.sideWidth / 2, self.sideWidth / 2) radius: self.sideWidth / 2 - self.uncheckedLineWidth startAngle:0 endAngle:M_PI * 2 clockwise:true].CGPath);
         lineWidthAnimation.duration = DEF_ANIM_DURATION / 3 * 2;
         lineWidthAnimation.removedOnCompletion = NO;
         lineWidthAnimation.fillMode = kCAFillModeForwards;
         [self.centerCircle addAnimation:lineWidthAnimation forKey:@"lineWidthAnimation"];
     } else {
         CABasicAnimation *lineWidthAnimation = [CABasicAnimation animationWithKeyPath:@"path"];
-        lineWidthAnimation.toValue =  (__bridge id _Nullable)([UIBezierPath bezierPathWithArcCenter:CGPointMake(self.sidelength / 2, self.sidelength / 2) radius:0 startAngle:0 endAngle:M_PI * 2 clockwise:true].CGPath);
+        lineWidthAnimation.toValue =  (__bridge id _Nullable)([UIBezierPath bezierPathWithArcCenter:CGPointMake(self.sideWidth / 2, self.sideWidth / 2) radius:0 startAngle:0 endAngle:M_PI * 2 clockwise:true].CGPath);
         lineWidthAnimation.duration = DEF_ANIM_DURATION / 3 * 2;
         lineWidthAnimation.removedOnCompletion = NO;
         lineWidthAnimation.fillMode = kCAFillModeForwards;
@@ -104,14 +96,19 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
     }
     
     CABasicAnimation *fillColorAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
-    UIColor *toValueColor = self.isChecked ? self.uncheckedBorderColor : self.checkedFillColor;
-    fillColorAnimation.toValue = (__bridge id _Nullable)(toValueColor.CGColor);
+    if (self.isChecked) {
+        fillColorAnimation.toValue = (__bridge id _Nullable)(self.uncheckedBorderColor.CGColor);
+    } else {
+        fillColorAnimation.toValue = (__bridge id _Nullable)(self.checkedFillColor.CGColor);
+    }
+    
     fillColorAnimation.duration = DEF_ANIM_DURATION / 3 * 2;
     fillColorAnimation.removedOnCompletion = NO;
     fillColorAnimation.fillMode = kCAFillModeForwards;
     [self.borderCircle addAnimation:fillColorAnimation forKey:@"fillColorAnimation"];
 }
 
+// 缩放动画
 - (void)startScaleBorderLayerAnimaiton {
     CABasicAnimation *firstScaleAnimation = [CABasicAnimation animationWithKeyPath:@"transform"];
     
@@ -157,9 +154,9 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
     }
 }
 
+// 打勾勾
 - (void)startDrawTick {
-
-    CGFloat unitLength = self.sidelength / 30;
+    CGFloat unitLength = self.sideWidth / 30;
     CGPoint beginPoint = CGPointMake(unitLength * 7, unitLength * 14);
     CGPoint transitionPoint = CGPointMake(unitLength * 13, unitLength * 20);
     CGPoint endPoint = CGPointMake(unitLength * 22, unitLength * 10);
@@ -175,7 +172,7 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
     tickLayer.lineCap = kCALineCapRound;
     tickLayer.lineJoin = kCALineJoinRound;
     tickLayer.fillColor = [UIColor clearColor].CGColor;
-    tickLayer.strokeColor = [UIColor whiteColor].CGColor;
+    tickLayer.strokeColor = self.tickColor.CGColor;
     tickLayer.strokeEnd = 0.0;
     [self.borderCircle addSublayer:tickLayer];
     
@@ -190,9 +187,9 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
 #pragma mark -- getter setter
 - (CAShapeLayer *)borderCircle {
     if (!_borderCircle) {
-        CGPoint centerPoint = CGPointMake(self.sidelength / 2, self.sidelength / 2);
+        CGPoint centerPoint = CGPointMake(self.sideWidth / 2, self.sideWidth / 2);
         
-        UIBezierPath *borderCirclePath = [UIBezierPath bezierPathWithArcCenter:centerPoint radius:self.sidelength / 2 startAngle:0 endAngle:M_PI * 2 clockwise:YES];
+        UIBezierPath *borderCirclePath = [UIBezierPath bezierPathWithArcCenter:centerPoint radius:self.sideWidth / 2 startAngle:0 endAngle:M_PI * 2 clockwise:YES];
         _borderCircle = [CAShapeLayer layer];
         _borderCircle.path = borderCirclePath.CGPath;
         _borderCircle.fillColor = self.uncheckedBorderColor.CGColor;
@@ -202,12 +199,12 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
 
 - (CAShapeLayer *)centerCircle {
     if (!_centerCircle) {
-        CGPoint centerPoint = CGPointMake(self.sidelength / 2, self.sidelength / 2);
+        CGPoint centerPoint = CGPointMake(self.sideWidth / 2, self.sideWidth / 2);
         
-        UIBezierPath *centerCirclePath = [UIBezierPath bezierPathWithArcCenter:centerPoint radius:self.sidelength / 2 - self.uncheckedLineWidth startAngle:0 endAngle:M_PI * 2 clockwise:YES];
+        UIBezierPath *centerCirclePath = [UIBezierPath bezierPathWithArcCenter:centerPoint radius:self.sideWidth / 2 - self.uncheckedLineWidth startAngle:0 endAngle:M_PI * 2 clockwise:YES];
         _centerCircle = [CAShapeLayer layer];
         _centerCircle.path = centerCirclePath.CGPath;
-        _centerCircle.fillColor = [UIColor whiteColor].CGColor;
+        _centerCircle.fillColor = self.uncheckedFillColor.CGColor;
     }
     return _centerCircle;
 }
