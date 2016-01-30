@@ -55,7 +55,7 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
 
 #pragma mark --
 - (void)addTapGestureRecognizer {
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(checkBoxClicked:)];
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(checkBoxClicked)];
     [self addGestureRecognizer:tap];
 }
 
@@ -65,7 +65,7 @@ CGFloat const DEF_ANIM_DURATION = 0.3;
 }
 
 #pragma mark -- Action
-- (void)checkBoxClicked:(UITapGestureRecognizer *)tap {
+- (void)checkBoxClicked {
     [self startBorderLayerAnimation];
     [self startScaleBorderLayerAnimaiton];
 }

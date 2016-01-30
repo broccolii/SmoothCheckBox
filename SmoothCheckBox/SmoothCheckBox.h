@@ -21,7 +21,8 @@
 @property (nonatomic, strong) UIColor *uncheckedFillColor;
 // 未选中时 边框色
 @property (nonatomic, strong) UIColor *uncheckedBorderColor;
-
+// 只读属性
+@property (nonatomic, assign, readonly) BOOL isChecked;
 
 - (instancetype)initWithSideWidth:(CGFloat)sideWidth;
 
